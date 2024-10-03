@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+// Global Set to store viewed items when triggerOnlyOnce is true
+const viewedItemsSet = new Set();
+
 class VisibilityObserver extends Component {
   constructor(props) {
     super(props);
@@ -18,20 +21,37 @@ class VisibilityObserver extends Component {
     }
   }
 
+  componentDidUpdate(prevProps) {
+    if (prevProps.itemId !== this.props.itemId && this.elementRef) {
+      this.observer.observe(this.elementRef);
+    }
+  }
+
   componentWillUnmount() {
     this.cleanupObserver();
   }
 
   handleIntersection = (entries) => {
-    const _props = this.props;
-    const obserer = this.observer;
-    entries.forEach(function (entry) {
+    const { onVisible, triggerOnlyOnce } = this.props;
+    const observer = this.observer;
+
+    entries.forEach((entry) => {
       if (entry.isIntersecting) {
-        if (entry.intersectionRatio <= 1) {
-          _props.onVisible(entry);
-        }
-        if (_props.triggerOnlyOnce) {
-          obserer.unobserve(entry.target);
+        const itemId = entry.target.getAttribute('data-item-id');  // Retrieve the unique itemId
+
+        if (triggerOnlyOnce) {
+          // Check if the item has already been viewed
+          if (!viewedItemsSet.has(itemId)) {
+            // Add the item to the Set and trigger onVisible
+            viewedItemsSet.add(itemId);  // Persist across component re-renders
+            onVisible(entry);  // Trigger the "item viewed" event
+            console.log(`Item viewed and added to global Set: ${itemId}`);
+          }
+          observer.unobserve(entry.target);  // Unobserve after first trigger if triggerOnlyOnce is true
+        } else {
+          // Trigger onVisible multiple times when triggerOnlyOnce is false
+          onVisible(entry);
+          console.log(`Item viewed (multiple times allowed): ${itemId}`);
         }
       }
     });
@@ -54,6 +74,7 @@ class VisibilityObserver extends Component {
         style={this.props.style}
         className={this.props.className}
         ref={this.setElementRef}
+        data-item-id={this.props.itemId}  // Ensure each item has a unique ID
       >
         {this.props.children}
       </div>
@@ -68,6 +89,7 @@ VisibilityObserver.propTypes = {
   triggerOnlyOnce: PropTypes.bool,
   style: PropTypes.object,
   className: PropTypes.string,
+  itemId: PropTypes.string.isRequired,
 };
 
 VisibilityObserver.defaultProps = {
