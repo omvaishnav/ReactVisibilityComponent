@@ -41,17 +41,17 @@ class VisibilityObserver extends Component {
 
         if (triggerOnlyOnce) {
           // Check if the item has already been viewed
-          if (!viewedItemsSet.has(itemId)) {
+          if (!viewedItemsSet.has(itemId) && itemId) {
             // Add the item to the Set and trigger onVisible
             viewedItemsSet.add(itemId);  // Persist across component re-renders
             onVisible(entry);  // Trigger the "item viewed" event
-            console.log(`Item viewed and added to global Set: ${itemId}`);
+          } else {
+            onVisible(entry);  // Trigger the "item viewed" event
           }
           observer.unobserve(entry.target);  // Unobserve after first trigger if triggerOnlyOnce is true
         } else {
           // Trigger onVisible multiple times when triggerOnlyOnce is false
           onVisible(entry);
-          console.log(`Item viewed (multiple times allowed): ${itemId}`);
         }
       }
     });
