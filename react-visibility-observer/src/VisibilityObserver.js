@@ -46,7 +46,7 @@ class VisibilityObserver extends Component {
             viewedItemsSet.add(itemId);  // Persist across component re-renders
             onVisible(entry);  // Trigger the "item viewed" event
           } else {
-            onVisible(entry);  // Trigger the "item viewed" event
+            !itemId && onVisible(entry);  // Trigger the "item viewed" event
           }
           observer.unobserve(entry.target);  // Unobserve after first trigger if triggerOnlyOnce is true
         } else {
